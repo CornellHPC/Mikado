@@ -1,0 +1,9 @@
+[submodule "grg-spmv"]
+	path = grg-spmv
+	url = git@github.com:CornellHPC/grg-spmv.git
+[submodule "grapp"]
+	path = grapp
+	url = git@github.com:CornellHPC/grapp
+[submodule "grgl"]
+	path = grgl
+	url = git@github.com:aprilweilab/grgl.git

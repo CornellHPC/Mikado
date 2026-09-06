@@ -1,0 +1,14 @@
+{
+    "chr19": {
+        "cuda_device": 0
+    },
+    "chr20": {
+        "cuda_device": 1
+    },
+    "chr21": {
+        "cuda_device": 2
+    },
+    "chr22": {
+        "cuda_device": 3
+    }
+}

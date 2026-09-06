@@ -1,0 +1,68 @@
+{
+    "chr1": {
+        "mkl_threads": [2, 1]
+    },
+    "chr2": {
+        "mkl_threads": [4, 1]
+    },
+    "chr3": {
+        "mkl_threads": [2, 1]
+    },
+    "chr4": {
+        "mkl_threads": [2, 1]
+    },
+    "chr5": {
+        "mkl_threads": [2, 1]
+    },
+    "chr6": {
+        "mkl_threads": [2, 1]
+    },
+    "chr7": {
+        "mkl_threads": [2, 1]
+    },
+    "chr8": {
+        "mkl_threads": [2, 1]
+    },
+    "chr9": {
+        "mkl_threads": [1, 1]
+    },
+    "chr10": {
+        "mkl_threads": [1, 1]
+    },
+    "chr11": {
+        "mkl_threads": [1, 1]
+    },
+    "chr12": {
+        "mkl_threads": [1, 1]
+    },
+    "chr13": {
+        "mkl_threads": [1, 1]
+    },
+    "chr14": {
+        "mkl_threads": [1, 1]
+    },
+    "chr15": {
+        "mkl_threads": [1, 1]
+    },
+    "chr16": {
+        "mkl_threads": [1, 1]
+    },
+    "chr17": {
+        "mkl_threads": [1, 1]
+    },
+    "chr18": {
+        "mkl_threads": [1, 1]
+    },
+    "chr19": {
+        "mkl_threads": [1, 1]
+    },
+    "chr20": {
+        "mkl_threads": [1, 1]
+    },
+    "chr21": {
+        "mkl_threads": [1, 1]
+    },
+    "chr22": {
+        "mkl_threads": [1, 1]
+    }
+}

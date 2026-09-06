@@ -1,0 +1,4 @@
+__pycache__
+*.log
+*.tsv
+.DS_store

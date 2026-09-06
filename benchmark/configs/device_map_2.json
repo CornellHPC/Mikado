@@ -1,0 +1,68 @@
+{
+    "chr1": {
+        "cuda_device": 0
+    },
+    "chr2": {
+        "cuda_device": 1
+    },
+    "chr3": {
+        "cuda_device": 1
+    },
+    "chr4": {
+        "cuda_device": 0
+    },
+    "chr5": {
+        "cuda_device": 0
+    },
+    "chr6": {
+        "cuda_device": 1
+    },
+    "chr7": {
+        "cuda_device": 1
+    },
+    "chr8": {
+        "cuda_device": 0
+    },
+    "chr9": {
+        "cuda_device": 0
+    },
+    "chr10": {
+        "cuda_device": 1
+    },
+    "chr11": {
+        "cuda_device": 1
+    },
+    "chr12": {
+        "cuda_device": 0
+    },
+    "chr13": {
+        "cuda_device": 0
+    },
+    "chr14": {
+        "cuda_device": 1
+    },
+    "chr15": {
+        "cuda_device": 1
+    },
+    "chr16": {
+        "cuda_device": 0
+    },
+    "chr17": {
+        "cuda_device": 0
+    },
+    "chr18": {
+        "cuda_device": 1
+    },
+    "chr19": {
+        "cuda_device": 1
+    },
+    "chr20": {
+        "cuda_device": 1
+    },
+    "chr21": {
+        "cuda_device": 1
+    },
+    "chr22": {
+        "cuda_device": 1
+    }
+}
