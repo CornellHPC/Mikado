@@ -54,7 +54,7 @@ Linking uses the system Boost/zstd/zlib and `mkl_intel_lp64` + `mkl_gnu_thread` 
 
 ## Container build
 
-`docker_images/grg-spmv/Dockerfile` invokes this script directly, from the
+`docker_images/mikado/Dockerfile` invokes this script directly, from the
 `mikado` checkout it clones into `/opt/mikado`:
 
 ```

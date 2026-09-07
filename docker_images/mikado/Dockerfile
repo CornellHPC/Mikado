@@ -18,10 +18,14 @@ RUN apt-get update && apt-get install -y \
     gpg-agent wget \
     && rm -rf /var/lib/apt/lists/*
 
+RUN mkdir -p /root/.ssh \
+    && ssh-keyscan github.com >> /root/.ssh/known_hosts
+
 RUN --mount=type=ssh \
     git clone git@github.com:CornellHPC/mikado.git /opt/mikado \
     && cd /opt/mikado \
-    && git checkout NA
+    && git checkout 054a0af \
+    && git submodule update --init --recursive
 
 # plink2 (official AVX2 glibc build) -> /usr/local/bin (on PATH). The base is
 # Ubuntu/x86_64, so this dynamically-linked AVX2 build runs as-is.
@@ -51,30 +55,22 @@ RUN wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRO
 ENV MKLROOT=/opt/intel/oneapi/mkl/latest
 RUN /opt/mikado/code/bolt_patch/build_bolt.sh
 
-RUN mkdir -p /root/.ssh \
-    && ssh-keyscan github.com >> /root/.ssh/known_hosts
+RUN pip install --break-system-packages \
+    setuptools \
+    pytest
 
-RUN --mount=type=ssh \
-    git clone git@github.com:aprilweilab/grgl.git /opt/grgl \
-    && cd /opt/grgl \
-    && git checkout 2f54604 \
+RUN cd /opt/mikado/grgl \
     && git submodule update --init --recursive \
     && python setup.py bdist_wheel \
     && pip install --break-system-packages --force-reinstall dist/*.whl
 
-RUN --mount=type=ssh \
-    git clone git@github.com:CornellHPC/grapp.git /opt/grapp \
-    && cd /opt/grapp \
-    && git checkout c49cc2e \
+RUN cd /opt/mikado/grapp \
     && pip install --break-system-packages .
 
-RUN --mount=type=ssh \
-    git clone git@github.com:CornellHPC/grg-spmv.git /opt/grg-spmv \
-    && cd /opt/grg-spmv \
-    && git checkout 98e9cc2 \
+RUN cd /opt/mikado/grg-spmv \
     && pip install --break-system-packages .[gpu]
 
-RUN cd /opt/mikado/implementation/trsv \
+RUN cd /opt/mikado/code/trsv \
     && make \
     && install -m 0755 sptrsv /usr/local/bin/sptrsv \
     && sptrsv --help

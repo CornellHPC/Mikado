@@ -56,8 +56,7 @@ make CUDA_HOME=/opt/nvidia/hpc_sdk/Linux_x86_64/25.5/cuda/12.9   # explicit tool
 
 ```
 # 1. Convert a .grg into the CSR matrix M = I - A
-/global/homes/y/yfli03/.conda/envs/trsv_grg/bin/python grg_to_csr.py \
-    /global/homes/y/yfli03/grg/grgl/jupyter/simple_example.grg M.csr
+python3 grg_to_csr.py /path/to/chr11.grg M.csr
 
 # 2. Build the benchmark
 make

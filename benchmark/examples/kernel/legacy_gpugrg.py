@@ -6,10 +6,11 @@ grapp, no per-run conversion), then times only the sparse matmul kernel: a
 concurrent sweep that dispatches one `GPUGRG.matmul` per chromosome across a
 ThreadPool and measures the wall time of the whole sweep. Loading is excluded.
 
-The `.gpugrg` artifacts are produced offline by `grg_to_gpugrg.py` (which runs
-`pygrgl.grg_to_gpu` once and serializes it), so the conversion cost is paid once
-rather than on every benchmark run -- mirroring how cusparse.py / trsv.py consume
-precomputed `.grg_spmv` / `.csr` artifacts.
+The `.gpugrg` artifacts are produced offline by
+`code/graph-first/grg_to_gpugrg.py` (which runs `pygrgl.grg_to_gpu` once and
+serializes it), so the conversion cost is paid once rather than on every
+benchmark run -- mirroring how cusparse.py / trsv.py consume precomputed
+`.grg_spmv` / `.csr` artifacts.
 
 A single run benchmarks one direction (`--direction up|down`) at one width
 (`--k`). `miss`/`init` inputs are not used (plain X @ V / X^T @ V). Single-GPU:

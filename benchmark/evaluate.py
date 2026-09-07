@@ -197,7 +197,7 @@ _KERNEL_BACKENDS = {
     "trsv": ("trsv.py", _positional),
     # Legacy GPUGRG matmul kernel via pygrgl.load_gpu_grg (no grapp). The dataset
     # is a directory of (or explicit list of) precomputed .gpugrg files, built
-    # offline by grg_to_gpugrg.py. Single-GPU (no --device-map).
+    # offline by code/graph-first/grg_to_gpugrg.py. Single-GPU (no --device-map).
     "legacy": ("legacy_gpugrg.py", _positional),
 }
 

@@ -105,7 +105,7 @@ def main():
                          "var CUDA_LAUNCH_BLOCKING=1. Without it the result stays "
                          "correct in expectation but the degenerate ~0-h2 REML fit "
                          "can be perturbed by unavoidable cross-GPU FP atomic "
-                         "non-determinism. See chats/6.bolt_lmm_debug.md.")
+                         "non-determinism.")
     ap.add_argument("--force-spmm", dest="force_spmm",
                     action=argparse.BooleanOptionalAction, default=False,
                     help="Capture graphs at k=2 (SpMM path) instead of k=1 (SpMV). "

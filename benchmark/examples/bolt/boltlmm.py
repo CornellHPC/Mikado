@@ -312,7 +312,7 @@ def main():
     ap.add_argument("--chromosomes",
                     help="Comma-separated chromosomes (required with --plink-dir).")
     ap.add_argument("--bolt-bin", type=pathlib.Path, required=True,
-                    help="Path to the BOLT-LMM v2.5 binary (e.g., <cache>/BOLT-LMM_v2.5/src/bolt).")
+                    help="Path to the BOLT-LMM v2.5 binary (e.g., /opt/BOLT-LMM_v2.5/bolt).")
     ap.add_argument("--work-dir", type=pathlib.Path, required=True,
                     help="Working directory for intermediate files.")
     ap.add_argument("--input-seed", type=int, default=2026,

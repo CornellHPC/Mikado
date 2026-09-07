@@ -40,5 +40,5 @@ RUN --mount=type=ssh \
 RUN --mount=type=ssh \
     git clone git@github.com:CornellHPC/mikado.git /opt/mikado \
     && cd /opt/mikado \
-    && git checkout NA
+    && git checkout 054a0af
 
