@@ -33,6 +33,20 @@ Docker images can be built using the provided Dockerfiles.
 
 ## Running Experiments
 
+**Converting dataset**
+To construct a .grg file from formats such as .vcf.gz, please refer to the [grgl docs](https://grgl.readthedocs.io/en/stable/) for instructions.
+
+Currently, the .grg file needs to go through a simple conversion step to generate a .grg_spmv artifact, which is the format that pygrgl-spmv can consume. This can be done using the simple_convert function provided in the grg-spmv library. A simple example:
+```
+from pygrgl_spmv import simple_convert
+
+artifact = simple_convert("chr1.grg", "artifacts/chr1.grg_spmv")
+```
+
+Multi-processing can speedup the process when you want to convert multiple datasets.
+
+**Running parameters**
+
 In side the mikado repo, benchmark scripts are provided under `benchmark`. The single entry point for user is `evaluate.py`, and the application and backend specific scripts are under `benchmark/examples`.
 
 These parameters apply to all calls to `evaluate.py`: 
@@ -56,7 +70,7 @@ For MIKADO CPU (MKL):
 For MIKADO GPU (cuSparse):
 - `--native`, `--no-native` defaults to on. In native mode the backend uses CuPy arrays, GPU-to-GPU communication for multiple chromosome runs, and CuPy's PCA. Better performance.
 - `--capture`, `--no-capture` defaults to on. Use CUDA graph capture. Better performance.
-- `--device-map <FILE>` device map file for the placement of chromosomes on GPUs, e.g. `benchmark/configs/device_map_[1/2/4].json`. Always use `device_map_1.json` when only a single chromosome is used.
+- `--device-map <FILE>` device map file for the placement of chromosomes on GPUs, e.g. `benchmark/configs/device_map_[1/2/4].json`. This controls the number of GPUs used when multiple devices are available. Device 0 is always used for non-GRG calculations. Always use `device_map_1.json` when only a single chromosome is used.
 - `--force-spmm`, `--no-force-spmm` defaults to off. When enabled, use k=2 even when computing k=1 cases, to remedy the cuSparse precision error. **For CUDA >= 13.3.1 it should be turned off.**
 - `--tol-record <FILE>` a GRGL / MIKADO CPU / MIKADO GPU non-native run record. Pass it when running PCA with cuSparse in native mode. SciPy uses relative error as the stopping condition and CuPy uses absolute, so CuPy's threshold is taken from the other run's result to keep the comparison fair.
 
@@ -64,7 +78,6 @@ For PLINK2, **all extra parameters need to be passed after `--`**:
 - `--plink2-bin <PATH>` path to the plink2 binary, e.g. `/usr/local/bin/plink2`. Required.
 - `--chromosomes <list>` comma-separated chromosomes to merge and analyze, e.g. `1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22`. Required for pca only.
 - `--threads <N>` plink2's own `--threads`
-
 
 For (Original) BOLT-LMM, **all extra parameters need to be passed after `--`**:
 - `--bolt-bin <PATH>` path to the BOLT-LMM binary, e.g. `/opt/BOLT-LMM_v2.5/bolt`. Required.

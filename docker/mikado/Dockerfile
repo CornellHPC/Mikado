@@ -24,7 +24,7 @@ RUN mkdir -p /root/.ssh \
 RUN --mount=type=ssh \
     git clone git@github.com:CornellHPC/mikado.git /opt/mikado \
     && cd /opt/mikado \
-    && git checkout 054a0af \
+    && git checkout dfb659a \
     && git submodule update --init --recursive
 
 # plink2 (official AVX2 glibc build) -> /usr/local/bin (on PATH). The base is
