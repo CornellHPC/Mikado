@@ -1,106 +1,172 @@
-## Mikado (Preprint Artifacts)
-This repository collects the code artifacts for the MIKADO preprint [link]().
-The goal of this repo is to provide the artifacts necessary for reproducing the results presented in the paper.
+<p align="center">
+  <img src="mikado-lockup-transparent-3600.png" alt="Mikado" width="480">
+</p>
 
+# Mikado — Preprint Artifacts
 
-## Manual Installation
+This repository collects the code artifacts for the Mikado preprint, *Sparse Linear Algebra Accelerates Genotype Representation Graph Computation at Biobank Scale* ([link]()). It provides everything needed to reproduce the results presented in the paper.
 
-Manual installation is supported for GRGL, MIKADO(CPU), and MIKADO(GPU) runs. It is not currently supported for the graph-first implementation and the cuSparse SpSV approach.
+## Table of Contents
+
+- [Citation](#citation)
+- [Installation](#installation)
+  - [Manual Installation](#manual-installation)
+  - [Using Dockerfiles](#using-dockerfiles)
+- [Running Experiments](#running-experiments)
+  - [Converting a Dataset](#converting-a-dataset)
+  - [Running Parameters](#running-parameters)
+  - [Backend-Specific Parameters](#backend-specific-parameters)
+  - [Application-Specific Parameters](#application-specific-parameters)
+  - [Examples](#examples)
+  - [Phenotype File](#phenotype-file)
+
+## Citation
+
+If you use Mikado in your work, please cite:
+
+```bibtex
+@misc{mikado,
+  title         = {Sparse Linear Algebra Accelerates Genotype Representation Graph Computation at Biobank Scale},
+  author        = {Li, Yifan and Sun, Qingyao and DeHaas, Drew and Zhao, Max Xiaohang and Boyko, Adam R. and Musharoff, Shaila A. and Wei, Xinzhu and Guidi, Giulia},
+  year          = {2026},
+  eprint        = {<arxiv-id>},
+  archivePrefix = {arXiv},
+  primaryClass  = {<primary-class>},
+  url           = {<preprint-url>}
+}
+```
+
+## Installation
+
+### Manual Installation
+
+Manual installation is supported for GRGL, Mikado (CPU), and Mikado (GPU) runs. It is not currently supported for the graph-first implementation or the cuSparse SpSV approach.
 
 GRGL, Grapp, and GRG-SpMV are included as git submodules, so clone this repository recursively:
-```
+
+```bash
 git clone --recurse-submodules git@github.com:CornellHPC/mikado.git
 ```
 
-If you already cloned without --recurse-submodules, the `grgl/`, `grapp/`, and `grg-spmv/` directories will be empty. Populate them with:
+If you already cloned without `--recurse-submodules`, the `grgl/`, `grapp/`, and `grg-spmv/` directories will be empty. Populate them with:
 
-```
+```bash
 git submodule update --init --recursive
 ```
 
-Install the three repositories in this order, following the setup instructions in each repository's own README:
-  1. **GRGL** (`grgl/`) — provides `pygrgl`, which includes GRGL backend, and GRG construction and manipulation-related functionalities.
-  2. **Grapp** (`grapp/`) — provides the GRG-based application implementations.
-  3. **GRG-SpMV** (`grg-spmv/`) — provides the core implementation of MIKADO, including both CPU and GPU backends.
+Install the three repositories in the following order, following the setup instructions in each repository's own README:
 
-## Using Dockerfiles
+1. **GRGL** (`grgl/`) — provides `pygrgl`, which includes the GRGL backend and GRG construction and manipulation functionality.
+2. **Grapp** (`grapp/`) — provides the GRG-based application implementations.
+3. **GRG-SpMV** (`grg-spmv/`) — provides the core implementation of Mikado, including both CPU and GPU backends.
 
-There are two docker files provided under `docker_images/`. 
-- `mikado` is the main image for running MIKADO experiments.
-- `graph-first` is the image for the graph-first implementation.
+### Using Dockerfiles
 
-Docker images can be built using the provided Dockerfiles.
+Two Dockerfiles are provided under `docker_images/`:
+
+- `mikado` — the main image for running Mikado experiments.
+- `graph-first` — the image for the graph-first implementation.
+
+Build either image using the provided Dockerfile.
 
 ## Running Experiments
 
-**Converting dataset**
-To construct a .grg file from formats such as .vcf.gz, please refer to the [grgl docs](https://grgl.readthedocs.io/en/stable/) for instructions.
+Benchmark scripts live under `benchmark/`. The single entry point is `evaluate.py`; application- and backend-specific scripts are under `benchmark/examples/`.
 
-Currently, the .grg file needs to go through a simple conversion step to generate a .grg_spmv artifact, which is the format that pygrgl-spmv can consume. This can be done using the simple_convert function provided in the grg-spmv library. A simple example:
-```
+### Converting a Dataset
+
+To construct a `.grg` file from formats such as `.vcf.gz`, refer to the [GRGL docs](https://grgl.readthedocs.io/en/stable/).
+
+The `.grg` file then needs a simple conversion step to generate a `.grg_spmv` artifact, the format that `pygrgl-spmv` consumes. Use the `simple_convert` function provided in the GRG-SpMV library:
+
+```python
 from pygrgl_spmv import simple_convert
 
 artifact = simple_convert("chr1.grg", "artifacts/chr1.grg_spmv")
 ```
 
-Multi-processing can speedup the process when you want to convert multiple datasets.
+Multi-processing can speed up conversion of multiple datasets.
 
-**Running parameters**
+### Running Parameters
 
-In side the mikado repo, benchmark scripts are provided under `benchmark`. The single entry point for user is `evaluate.py`, and the application and backend specific scripts are under `benchmark/examples`.
+The following parameters apply to all calls to `evaluate.py`:
 
-These parameters apply to all calls to `evaluate.py`: 
-- `-a APPLICATION`  benchmark application (one of: bolt, gwas, kernel, pca, pca_lobpcg)
-- `-b BACKEND` backend implementation, validated against the chosen application. grgl, mkl, and cusparse are available for every application; boltlmm only for bolt; plink only for pca and gwas; trsv and legacy only for kernel. pca_lobpcg has no baseline backend.
-- `-d DATASET` dataset path, forwarded to the backend via its dataset adapter. Can be a file (one chromosome) or a directory containing multiple files (multiple chromosomes) depending on the application and backend.
-- `--warmup WARMUP` number of warmup runs.
-- `--runs RUNS` number of experiment runs (each run will be a line of record).
-- `--record RECORD` record file (JSONL). Each line will contain the parameters, basic system info, and results of one experiment run.
-- `--output OUTPUT` result file (TSV). Available for all applications except kernel.
-- `--skip-output` skip output writing for GWAS, BOLT-LMM, PCA runs.
-- `--work-dir DIR` (PLINK2 and original BOLT-LMM only) directory for intermediate files.
+| Parameter | Description |
+| --- | --- |
+| `-a APPLICATION` | Benchmark application: one of `bolt`, `gwas`, `kernel`, `pca`, `pca_lobpcg`. |
+| `-b BACKEND` | Backend implementation, validated against the chosen application. `grgl`, `mkl`, and `cusparse` are available for every application; `boltlmm` only for `bolt`; `plink` only for `pca` and `gwas`; `trsv` and `legacy` only for `kernel`. `pca_lobpcg` has no baseline backend. |
+| `-d DATASET` | Dataset path, forwarded to the backend via its dataset adapter. Either a file (one chromosome) or a directory of files (multiple chromosomes), depending on application and backend. |
+| `--warmup WARMUP` | Number of warmup runs. |
+| `--runs RUNS` | Number of experiment runs (each run is one record line). |
+| `--record RECORD` | Record file (JSONL). Each line holds the parameters, basic system info, and results of one run. |
+| `--output OUTPUT` | Result file (TSV). Available for all applications except `kernel`. |
+| `--skip-output` | Skip output writing for GWAS, BOLT-LMM, and PCA runs. |
+| `--work-dir DIR` | Directory for intermediate files (PLINK2 and original BOLT-LMM only). |
 
+### Backend-Specific Parameters
 
-There're some **additional backend-specific parameters**. The MKL and cuSparse ones are `evaluate.py`'s own parameters. Some parameters have to be passed after `--`, which means they're passed to the underlying application/backend-specific script directly. Such parameters will be noted.
+Some parameters are `evaluate.py`'s own (MKL and cuSparse); others must be passed after `--`, meaning they go directly to the underlying application- or backend-specific script. Parameters requiring `--` are noted below.
 
-For MIKADO CPU (MKL):
-- `--mkl-threads <N>` number of threads to use for MKL. This can be a single number, or a map, e.g. `benchmark/configs/mkl_threads_d32.json`, which allocate different number of threads to different chromosomes
-- `--optimize` enable MKL optimization flags. This will consume a lot more memory and need some optimization time. After optimization MKL may run faster.
+**Mikado CPU (MKL)**
 
-For MIKADO GPU (cuSparse):
-- `--native`, `--no-native` defaults to on. In native mode the backend uses CuPy arrays, GPU-to-GPU communication for multiple chromosome runs, and CuPy's PCA. Better performance.
-- `--capture`, `--no-capture` defaults to on. Use CUDA graph capture. Better performance.
-- `--device-map <FILE>` device map file for the placement of chromosomes on GPUs, e.g. `benchmark/configs/device_map_[1/2/4].json`. This controls the number of GPUs used when multiple devices are available. Device 0 is always used for non-GRG calculations. Always use `device_map_1.json` when only a single chromosome is used.
-- `--force-spmm`, `--no-force-spmm` defaults to off. When enabled, use k=2 even when computing k=1 cases, to remedy the cuSparse precision error. **For CUDA >= 13.3.1 it should be turned off.**
-- `--tol-record <FILE>` a GRGL / MIKADO CPU / MIKADO GPU non-native run record. Pass it when running PCA with cuSparse in native mode. SciPy uses relative error as the stopping condition and CuPy uses absolute, so CuPy's threshold is taken from the other run's result to keep the comparison fair.
+| Parameter | Description |
+| --- | --- |
+| `--mkl-threads <N>` | Number of MKL threads. A single number, or a map (e.g. `benchmark/configs/mkl_threads_d32.json`) that allocates different thread counts per chromosome. |
+| `--optimize` | Enable MKL optimization flags. Consumes more memory and adds optimization time, but MKL may run faster afterward. |
 
-For PLINK2, **all extra parameters need to be passed after `--`**:
-- `--plink2-bin <PATH>` path to the plink2 binary, e.g. `/usr/local/bin/plink2`. Required.
-- `--chromosomes <list>` comma-separated chromosomes to merge and analyze, e.g. `1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22`. Required for pca only.
-- `--threads <N>` plink2's own `--threads`
+**Mikado GPU (cuSparse)**
 
-For (Original) BOLT-LMM, **all extra parameters need to be passed after `--`**:
-- `--bolt-bin <PATH>` path to the BOLT-LMM binary, e.g. `/opt/BOLT-LMM_v2.5/bolt`. Required.
-- `--chromosomes 19,20,21,22` comma-separated chromosomes to analyze, matching the dataset. Required.
-- `--threads <N>` number of threads BOLT-LMM uses.
+| Parameter | Description |
+| --- | --- |
+| `--native`, `--no-native` | Defaults to on. Native mode uses CuPy arrays, GPU-to-GPU communication for multi-chromosome runs, and CuPy's PCA, for better performance. |
+| `--capture`, `--no-capture` | Defaults to on. Use CUDA graph capture for better performance. |
+| `--device-map <FILE>` | Device map for chromosome placement across GPUs (e.g. `benchmark/configs/device_map_[1/2/4].json`). Controls how many GPUs are used when multiple are available. Device 0 is always used for non-GRG computation. Use `device_map_1.json` for single-chromosome runs. |
+| `--force-spmm`, `--no-force-spmm` | Defaults to off. When enabled, uses k=2 even for k=1 cases to remedy the cuSparse precision error. **Turn off for CUDA >= 13.3.1.** |
+| `--tol-record <FILE>` | A GRGL / Mikado CPU / Mikado GPU non-native run record. Pass it when running PCA with cuSparse in native mode: SciPy uses relative error as its stopping condition while CuPy uses absolute, so CuPy's threshold is taken from the other run's result to keep the comparison fair. |
 
-There're some **additional application-specific parameters**:
+**PLINK2** (all extra parameters after `--`)
 
-For application bolt:
-- `--bolt-pheno-file <FILE>` phenotype file, e.g. `<dataset>/pheno.txt`. **Always pass it, otherwise a synthetic seeded phenotype is used.** See Running Experiments - Phenotype File for format requirements.
+| Parameter | Description |
+| --- | --- |
+| `--plink2-bin <PATH>` | Path to the plink2 binary (e.g. `/usr/local/bin/plink2`). Required. |
+| `--chromosomes <list>` | Comma-separated chromosomes to merge and analyze (e.g. `1,2,...,22`). Required for `pca` only. |
+| `--threads <N>` | plink2's own `--threads`. |
 
-For kernel, **these need to be passed after `--`**:
-- `--direction up|down` matmul direction. Defaults to up.
-- `--k <N>` number of probe vectors. k=1 is SpMV, k>1 is SpMM. Defaults to 1.
+**Original BOLT-LMM** (all extra parameters after `--`)
 
-For pca_lobpcg, **after `--`**:
-- `--pcs <N>` number of eigenvectors to compute. Defaults to 10.
+| Parameter | Description |
+| --- | --- |
+| `--bolt-bin <PATH>` | Path to the BOLT-LMM binary (e.g. `/opt/BOLT-LMM_v2.5/bolt`). Required. |
+| `--chromosomes <list>` | Comma-separated chromosomes to analyze, matching the dataset (e.g. `19,20,21,22`). Required. |
+| `--threads <N>` | Number of threads BOLT-LMM uses. |
 
-### Example
+### Application-Specific Parameters
 
-Suppose we're using docker instance. The simulated 200k dataset is mounted at /sim2/, the 1000 Genomes dataset is mounted at /1kg/, and the output records directory is mounted at /records/.
+**bolt**
 
-Kernel MIKADO CPU (MKL) run (requires .grg_spmv files):
+| Parameter | Description |
+| --- | --- |
+| `--bolt-pheno-file <FILE>` | Phenotype file (e.g. `<dataset>/pheno.txt`). **Always pass it; otherwise a synthetic seeded phenotype is used.** See [Phenotype File](#phenotype-file) for format. |
+
+**kernel** (after `--`)
+
+| Parameter | Description |
+| --- | --- |
+| `--direction up\|down` | Matmul direction. Defaults to `up`. |
+| `--k <N>` | Number of probe vectors. k=1 is SpMV, k>1 is SpMM. Defaults to 1. |
+
+**pca_lobpcg** (after `--`)
+
+| Parameter | Description |
+| --- | --- |
+| `--pcs <N>` | Number of eigenvectors to compute. Defaults to 10. |
+
+### Examples
+
+The examples below assume a Docker instance where the simulated 200k dataset is mounted at `/sim2/`, the 1000 Genomes dataset at `/1kg/`, and the output records directory at `/records/`.
+
+**Kernel — Mikado CPU (MKL)** (requires `.grg_spmv` files):
+
 ```bash
 cd /opt/mikado/benchmark
 source /opt/intel/oneapi/mkl/latest/env/vars.sh
@@ -109,9 +175,11 @@ python3 evaluate.py -a kernel -b mkl \
   --mkl-threads 16 --record /records/mkl_ker.jsonl \
   -- --direction up --k 1
 ```
-*The source command is necessary for mkl executions in docker.*
 
-GWAS PLINK2 run (requires .bed/.bim/.fam files):
+> The `source` command is necessary for MKL executions in Docker.
+
+**GWAS — PLINK2** (requires `.bed`/`.bim`/`.fam` files):
+
 ```bash
 cd /opt/mikado/benchmark
 python3 evaluate.py -a gwas -b plink -d /sim2/chr21.bed \
@@ -121,7 +189,8 @@ python3 evaluate.py -a gwas -b plink -d /sim2/chr21.bed \
   -- --plink2-bin /usr/local/bin/plink2 --threads 32
 ```
 
-PCA GRGL run (requires .grg files):
+**PCA — GRGL** (requires `.grg` files):
+
 ```bash
 cd /opt/mikado/benchmark
 python3 evaluate.py -a pca -b grgl \
@@ -129,7 +198,8 @@ python3 evaluate.py -a pca -b grgl \
   --record /records/grgl_pca.jsonl
 ```
 
-BOLT-LMM MIKADO GPU (cuSparse) run with 4 devices (requires .grg_spmv files):
+**BOLT-LMM — Mikado GPU (cuSparse), 4 devices** (requires `.grg_spmv` files):
+
 ```bash
 cd /opt/mikado/benchmark
 python3 evaluate.py -a bolt -b cusparse -d /1kg/ \
@@ -139,10 +209,13 @@ python3 evaluate.py -a bolt -b cusparse -d /1kg/ \
   --record /records/bolt_cus.jsonl \
   --output /1kg/bolt_1kg_cus.tsv
 ```
-*A phenotype file (/1kg/pheno.txt in this example) is required for BOLT-LMM runs.*
+
+> A phenotype file (`/1kg/pheno.txt` here) is required for BOLT-LMM runs.
 
 ### Phenotype File
-Following the standard format, we recommend the `FID IID PHENO` format for phenotype files. As an example:
+
+Following the standard format, the `FID IID PHENO` layout is recommended:
+
 ```
 FID IID PHENO
 0 HG00096 -685.90926499272052
@@ -155,16 +228,18 @@ FID IID PHENO
 0 HG00105 -670.1759539529744
 0 HG00106 -746.82045085437449
 ```
-However, for Grapp-based approaches (including MIKADO), the phenotype rows are matched to individuals by position, not by ID — the FID and IID columns are ignored entirely, and only the last column is read. Row i must therefore be GRG individual i.
-GRG preserves the individual order at construction and `.grg_spmv` files also preserve such order, thus the order should align by default.
-However, we recommend manual checking the order whenever necessary.
-The commands below print FID_IID joined by an underscore in individual order in a `.grg` file:
+
+For Grapp-based approaches (including Mikado), phenotype rows are matched to individuals **by position, not by ID**: the FID and IID columns are ignored entirely, and only the last column is read. Row i must therefore correspond to GRG individual i.
+
+GRG preserves individual order at construction, and `.grg_spmv` files preserve that order, so alignment holds by default. Manual checking is nonetheless recommended when in doubt. The snippet below prints `FID_IID` in individual order for a `.grg` file:
+
 ```python
 import pygrgl
+
 grg = pygrgl.load_immutable_grg(str(PATH_TO_GRG), load_up_edges=False)
 n = int(grg.num_individuals)
 for i in range(n):
-  print(grg.get_individual_id(i))
+    print(grg.get_individual_id(i))
 ```
 
-Input covariates also need to be ordered accordingly.
+Input covariates must be ordered accordingly.
