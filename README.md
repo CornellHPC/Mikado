@@ -23,7 +23,7 @@ This repository collects the code artifacts for the Mikado preprint, *Sparse Lin
 
 ## Citation
 
-If you use Mikado in your work, please cite:
+If you use Mikado in your work (to appear online by 9/15/2026), please cite:
 
 ```bibtex
 @misc{mikado,
