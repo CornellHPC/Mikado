@@ -19,6 +19,7 @@ This repository collects the code artifacts for the Mikado preprint, *Sparse Lin
   - [Application-Specific Parameters](#application-specific-parameters)
   - [Examples](#examples)
   - [Phenotype File](#phenotype-file)
+- [Acknowledgements](#acknowledgements)
 
 ## Citation
 
@@ -243,3 +244,9 @@ for i in range(n):
 ```
 
 Input covariates must be ordered accordingly.
+
+## Acknowledgements
+
+The authors gratefully acknowledge *All of Us* participants for their contributions, without whom this research would not have been possible. We thank Andrew Clark and Can Firtina for their feedback on the manuscript. In addition, we thank the National Institutes of Health *All of Us* Research Program for making available the participant data examined in this study. This study used data from the *All of Us* Research Program Controlled Tier Dataset CDRv8, available to authorized users on the Researcher Workbench.
+
+This material is based upon work supported by the National Science Foundation under Grant IIS-2435801. This research used resources from the National Energy Research Scientific Computing Center, a DOE Office of Science User Facility supported by the Office of Science of the U.S. Department of Energy under Contract No. DE-AC02-05CH11231, using NERSC award ASCR-ERCAP0030076. This work used DeltaAI at the National Center for Supercomputing Applications (NCSA) through allocation CIS251351 from the Advanced Cyberinfrastructure Coordination Ecosystem: Services & Support (ACCESS) program, which is supported by U.S. National Science Foundation grants #2138259, #2138286, #2138307, #2137603, and #2138296.
