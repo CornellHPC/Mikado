@@ -4,7 +4,7 @@
 
 # Mikado — Preprint Artifacts
 
-This repository collects the code artifacts for the Mikado preprint, *Sparse Linear Algebra Accelerates Genotype Representation Graph Computation at Biobank Scale* ([link TBD](https://github.com/CornellHPC/Mikado/blob/preprint/README.md)). It provides everything needed to reproduce the results presented in the paper.
+This repository collects the code artifacts for the Mikado preprint, *Sparse Linear Algebra Accelerates Genotype Representation Graph Computation at Biobank Scale* ([link TBD](https://www.biorxiv.org/content/10.64898/2026.09.10.750583v1.full.pdf)). It provides everything needed to reproduce the results presented in the paper.
 
 ## Table of Contents
 
@@ -26,14 +26,15 @@ This repository collects the code artifacts for the Mikado preprint, *Sparse Lin
 If you use Mikado in your work (to appear online by 9/15/2026), please cite:
 
 ```bibtex
-@misc{mikado,
-  title         = {Sparse Linear Algebra Accelerates Genotype Representation Graph Computation at Biobank Scale},
-  author        = {Li, Yifan and Sun, Qingyao and DeHaas, Drew and Zhao, Max Xiaohang and Boyko, Adam R. and Musharoff, Shaila A. and Wei, Xinzhu and Guidi, Giulia},
-  year          = {2026},
-  eprint        = {<arxiv-id>},
-  archivePrefix = {arXiv},
-  primaryClass  = {<primary-class>},
-  url           = {<preprint-url>}
+@article{mikado,
+  author       = {Li, Yifan and Sun, Qingyao and DeHaas, Drew and Zhao, Max Xiaohang and Boyko, Adam R. and Musharoff, Shaila A. and Wei, Xinzhu and \textbf{Guidi, Giulia}},
+  title        = {Sparse Linear Algebra Accelerates Genotype Representation Graph Computation at Biobank Scale},
+  year         = {2026},
+  journal      = {bioRxiv},
+  publisher    = {Cold Spring Harbor Laboratory},
+  doi          = {10.64898/2026.09.10.750583},
+  url          = {https://www.biorxiv.org/content/10.64898/2026.09.10.750583v1},
+  note         = {Preprint}
 }
 ```
 
