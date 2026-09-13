@@ -27,7 +27,7 @@ If you use Mikado in your work (to appear online by 9/15/2026), please cite:
 
 ```bibtex
 @article{mikado,
-  author       = {Li, Yifan and Sun, Qingyao and DeHaas, Drew and Zhao, Max Xiaohang and Boyko, Adam R. and Musharoff, Shaila A. and Wei, Xinzhu and \textbf{Guidi, Giulia}},
+  author       = {Li, Yifan and Sun, Qingyao and DeHaas, Drew and Zhao, Max Xiaohang and Boyko, Adam R. and Musharoff, Shaila A. and Wei, Xinzhu and Guidi, Giulia},
   title        = {Sparse Linear Algebra Accelerates Genotype Representation Graph Computation at Biobank Scale},
   year         = {2026},
   journal      = {bioRxiv},
