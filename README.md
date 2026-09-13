@@ -4,7 +4,7 @@
 
 # Mikado — Preprint Artifacts
 
-This repository collects the code artifacts for the Mikado preprint, *Sparse Linear Algebra Accelerates Genotype Representation Graph Computation at Biobank Scale* ([link TBD](https://www.biorxiv.org/content/10.64898/2026.09.10.750583v1.full.pdf)). It provides everything needed to reproduce the results presented in the paper.
+This repository collects the code artifacts for the Mikado preprint, *Sparse Linear Algebra Accelerates Genotype Representation Graph Computation at Biobank Scale* ([link](https://www.biorxiv.org/content/10.64898/2026.09.10.750583v1.full.pdf)). It provides everything needed to reproduce the results presented in the paper.
 
 ## Table of Contents
 
