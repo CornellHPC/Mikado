@@ -2,28 +2,28 @@
   <img src="mikado-lockup-transparent-3600.png" alt="Mikado" width="480">
 </p>
 
-# Mikado — Preprint Artifacts
+# Mikado
 
-This repository collects the code artifacts for the Mikado preprint, *Sparse Linear Algebra Accelerates Genotype Representation Graph Computation at Biobank Scale* ([link](https://www.biorxiv.org/content/10.64898/2026.09.10.750583v1.full.pdf)). It provides everything needed to reproduce the results presented in the paper.
+Mikado is a sparse-linear-algebra powered backend for Genotype Representation Graph (GRG) computation. It is designed to be efficient, scalable, and portable, all at Biobank scale. Currently, x86 CPUs and NVIDIA GPUs are supported.
+
+Mikado can achieve speedups of hundreds or even thousands times compared to conventional implementations (PLINK2, BOLT-LMM, etc.), reducing runtime and cost at the same time. Mikado is able to compute **PCA** on the **full All of Us** v8 phased dataset (414,830 Individuals; 870,337,413 Mutations) within **180 seconds**, and **BOLT-LMM-inf** on the 1000 Genomes dataset within **60 seconds**. Compared to the GRGL (GRG Library) implementation, Mikado with A100 GPU can accelerate a single traversal by up to 470x.
+
+For further details on the SpMV-based formulation and performance, please check our preprint, *Sparse Linear Algebra Accelerates Genotype Representation Graph Computation at Biobank Scale* ([link](https://www.biorxiv.org/content/10.64898/2026.09.10.750583v1.full.pdf)). To reproduce the results in the preprint, please refer to the `preprint` branch.
 
 ## Table of Contents
 
 - [Citation](#citation)
-- [Installation](#installation)
-  - [Manual Installation](#manual-installation)
-  - [Using Dockerfiles](#using-dockerfiles)
-- [Running Experiments](#running-experiments)
-  - [Converting a Dataset](#converting-a-dataset)
-  - [Running Parameters](#running-parameters)
-  - [Backend-Specific Parameters](#backend-specific-parameters)
-  - [Application-Specific Parameters](#application-specific-parameters)
-  - [Examples](#examples)
-  - [Phenotype File](#phenotype-file)
+- [Workflow](#workflow)
+- [Resource Requirement](#resource-requirement)
+  - [GRG Construction Time](#grg-construction-time)
+  - [GRG_SPMV Conversion Time](#grg_spmv-conversion-time)
+  - [RAM Requirement for Mikado (GRG-SpMV)](#ram-requirement-for-mikado-grg-spmv)
+- [Installation and Usage](#installation-and-usage)
 - [Acknowledgements](#acknowledgements)
 
 ## Citation
 
-If you use Mikado in your work (to appear online by 9/15/2026), please cite:
+If you use Mikado in your work, please cite:
 
 ```bibtex
 @article{mikado,
@@ -38,213 +38,76 @@ If you use Mikado in your work (to appear online by 9/15/2026), please cite:
 }
 ```
 
-## Installation
+## Workflow
 
-### Manual Installation
+Mikado is based on GRG (Genotype Representation Graph), a novel graph-based representation for genotype data that enables efficient storage and computation on genetic variants at Biobank scale. Please refer to the [grg docs](https://grgl.readthedocs.io/en/stable/) and the [research paper](https://www.nature.com/articles/s43588-024-00739-9) for more information on GRG.
 
-Manual installation is supported for GRGL, Mikado (CPU), and Mikado (GPU) runs. It is not currently supported for the graph-first implementation or the cuSparse SpSV approach.
+Our work, Mikado, does not change the graph representation. Instead, we introduced a SpTRSV-SpMV formulation, with pipelined wavefront block forward substitution, as a compute method on top of GRG. With this formulation, the computation is lowered to SpMV primitives, which is commonly-provided and highly-optimized on different hardware.
 
-GRGL, Grapp, and GRG-SpMV are included as git submodules, so clone this repository recursively:
+<p align="center">
+  <img src="frontend-backend.png" alt="Mikado" width="720">
+</p>
 
-```bash
-git clone --recurse-submodules git@github.com:CornellHPC/mikado.git
-```
+**Originally**, GRG-based application is disaggregated into two parts: 
+- [GRGL](https://github.com/aprilweilab/grgl), which is responsible for GRG consturction and manipulation, and serves as the **Backend** for GRG-based computation.
+- [Grapp](https://github.com/aprilweilab/grapp), which is the **Frontend** and includes the implementations for GRG-based applications, such as GWAS, PCA, and BOLT-LMM-inf. 
 
-If you already cloned without `--recurse-submodules`, the `grgl/`, `grapp/`, and `grg-spmv/` directories will be empty. Populate them with:
+The main code repository for **Mikado**, [GRG-SpMV](https://github.com/CornellHPC/grg-spmv), **serves as an alternative computation backend for Grapp.** It currently supports CPU-based computation through Intel MKL, and NVIDIA GPU-based computation through cuSPARSE.
+*[1] Mikado approach can be implemented with minimal effort by using other SpMV vendor backend, e.g ROCm for AMD GPU. If interested in other backends not currently supported, please raise an issue.*
 
-```bash
-git submodule update --init --recursive
-```
 
-Install the three repositories in the following order, following the setup instructions in each repository's own README:
+<p align="center">
+  <img src="file-formats.png" alt="Mikado" width="960">
+</p>
 
-1. **GRGL** (`grgl/`) — provides `pygrgl`, which includes the GRGL backend and GRG construction and manipulation functionality.
-2. **Grapp** (`grapp/`) — provides the GRG-based application implementations.
-3. **GRG-SpMV** (`grg-spmv/`) — provides the core implementation of Mikado, including both CPU and GPU backends.
+The figure above shows the file formats used. The `.grg` files can be constructed from `.vcf.gz` files. Using `igd` as an intermediate format can speedup the construction in most cases. Construction of GRGs generally take multiple hours for a single chromosome on Biobank-scale datasets.
+Mikado (GRG-SpMV backend) currently requires a dedicated format, `.grg_spmv`. The conversion from `.grg` to `.grg_spmv` is expected to be lightweight.
 
-### Using Dockerfiles
+## Resource Requirement
 
-Two Dockerfiles are provided under `docker_images/`:
+### GRG Construction Time
 
-- `mikado` — the main image for running Mikado experiments.
-- `graph-first` — the image for the graph-first implementation.
+The construction of GRG is a resource-intensive process, but the hardware requirement and time consumption generally stays within reasonable range. Here we show the construction time of GRGs on selected chromosome of the All of Us v8 Phased dataset (with 414,830 individuals). The `n1_regular_32` instance type, with 16 physical cores and 120GB of RAM is used for construction.
 
-Build either image using the provided Dockerfile.
+|Chromosome|`.vcf.gz` File Size|Number of Variants|IGD Conversion Time|GRG Construction Time|
+|----------|-------------------|------------------|--------------------|---------------------|
+|chr5     | 196 GB            | 57,032,792       | 11.9 hours         | 2.9 hours             |
+|chr13     | 108 GB            | 30,469,204       | 5.9 hours          | 1.4 hours           |
+|chr22     | 42 GB            | 11,973,519       | 2.24 hours         | 0.8 hours           |
 
-## Running Experiments
+### GRG_SPMV Conversion Time
 
-Benchmark scripts live under `benchmark/`. The single entry point is `evaluate.py`; application- and backend-specific scripts are under `benchmark/examples/`.
+The conversion from `.grg` files to `.grg_spmv` files is expected to be lightweight. Since only one thread is needed for converting a chromosome, the conversion of multiple chromosomes can happen concurrently on a machine. The conversion of all chromosomes in All of Us v8 phased should finish within 12 hours on the `n1_regular_32` instance type.
 
-### Converting a Dataset
+### RAM Requirement for Mikado (GRG-SpMV)
 
-To construct a `.grg` file from formats such as `.vcf.gz`, refer to the [GRGL docs](https://grgl.readthedocs.io/en/stable/).
+RAM consumption is the major constraint of the Mikado approach, especially on GPU where VRAM is limited. While "streaming mode", where chromosomes not currently used reside in CPU memory, can alleviate some memory pressure, it introduce additional overhead and is not recommended in general.
+Alternatively, if multiple GPUs are available on a single node, the workload can be distributed across them to mitigate memory constraints. NVLINK connection between GPUs are highly recommended in this case.
 
-The `.grg` file then needs a simple conversion step to generate a `.grg_spmv` artifact, the format that `pygrgl-spmv` consumes. Use the `simple_convert` function provided in the GRG-SpMV library:
+While RAM usage behavior depends on the specific dataset and application, we conclude that GRGs are the components that consume the most memory (>80%) in the pipeline.
+Extended Section 4 of [our preprint](https://www.biorxiv.org/content/biorxiv/early/2026/09/12/2026.09.10.750583.full.pdf) provides details and examples on memory consumption patterns. Here we show the file size of selected chromosomes in the All of Us v8 phased dataset.
 
-```python
-from pygrgl_spmv import simple_convert
+|Chromosome|`.vcf.gz` File Size|`.grg` File Size|`.grg_spmv` File Size|
+|----------|---------|------------------|------------------|
+|chr5     | 196 GB  | 6.4 GB       | 12GB       |
+|chr13    | 108 GB  | 3.7 GB       | 6.8GB       |
+|chr22    | 42 GB   | 1.9 GB       | 3.5GB       |
 
-artifact = simple_convert("chr1.grg", "artifacts/chr1.grg_spmv")
-```
+In our experiments, 4*A100(80 GB) is enough for all experiments performed on the All of Us v8 phased dataset, whose `.grg_spmv` file sizes total to 197GB. 
 
-Multi-processing can speed up conversion of multiple datasets.
+## Installation and Usage
 
-### Running Parameters
+Since Mikado is still in early development, we recommend manually cloning the three repositories and installing:
+- [GRGL](https://github.com/aprilweilab/grgl)
+- [Grapp](https://github.com/aprilweilab/grapp)
+- [GRG-SpMV](https://github.com/CornellHPC/grg-spmv)
 
-The following parameters apply to all calls to `evaluate.py`:
+Please refer to the [grg documentation](https://grgl.readthedocs.io/en/stable/) for detailed information on 
+- Constructing GRGs
+- Using Grapp/GRGL to run applications via command line
+- Using Grapp/GRGL to run applications via Python API
 
-| Parameter | Description |
-| --- | --- |
-| `-a APPLICATION` | Benchmark application: one of `bolt`, `gwas`, `kernel`, `pca`, `pca_lobpcg`. |
-| `-b BACKEND` | Backend implementation, validated against the chosen application. `grgl`, `mkl`, and `cusparse` are available for every application; `boltlmm` only for `bolt`; `plink` only for `pca` and `gwas`; `trsv` and `legacy` only for `kernel`. `pca_lobpcg` has no baseline backend. |
-| `-d DATASET` | Dataset path, forwarded to the backend via its dataset adapter. Either a file (one chromosome) or a directory of files (multiple chromosomes), depending on application and backend. |
-| `--warmup WARMUP` | Number of warmup runs. |
-| `--runs RUNS` | Number of experiment runs (each run is one record line). |
-| `--record RECORD` | Record file (JSONL). Each line holds the parameters, basic system info, and results of one run. |
-| `--output OUTPUT` | Result file (TSV). Available for all applications except `kernel`. |
-| `--skip-output` | Skip output writing for GWAS, BOLT-LMM, and PCA runs. |
-| `--work-dir DIR` | Directory for intermediate files (PLINK2 and original BOLT-LMM only). |
-
-### Backend-Specific Parameters
-
-Some parameters are `evaluate.py`'s own (MKL and cuSparse); others must be passed after `--`, meaning they go directly to the underlying application- or backend-specific script. Parameters requiring `--` are noted below.
-
-**Mikado CPU (MKL)**
-
-| Parameter | Description |
-| --- | --- |
-| `--mkl-threads <N>` | Number of MKL threads. A single number, or a map (e.g. `benchmark/configs/mkl_threads_d32.json`) that allocates different thread counts per chromosome. |
-| `--optimize` | Enable MKL optimization flags. Consumes more memory and adds optimization time, but MKL may run faster afterward. |
-
-**Mikado GPU (cuSparse)**
-
-| Parameter | Description |
-| --- | --- |
-| `--native`, `--no-native` | Defaults to on. Native mode uses CuPy arrays, GPU-to-GPU communication for multi-chromosome runs, and CuPy's PCA, for better performance. |
-| `--capture`, `--no-capture` | Defaults to on. Use CUDA graph capture for better performance. |
-| `--device-map <FILE>` | Device map for chromosome placement across GPUs (e.g. `benchmark/configs/device_map_[1/2/4].json`). Controls how many GPUs are used when multiple are available. Device 0 is always used for non-GRG computation. Use `device_map_1.json` for single-chromosome runs. |
-| `--force-spmm`, `--no-force-spmm` | Defaults to off. When enabled, uses k=2 even for k=1 cases to remedy the cuSparse precision error. **Turn off for CUDA >= 13.3.1.** |
-| `--tol-record <FILE>` | A GRGL / Mikado CPU / Mikado GPU non-native run record. Pass it when running PCA with cuSparse in native mode: SciPy uses relative error as its stopping condition while CuPy uses absolute, so CuPy's threshold is taken from the other run's result to keep the comparison fair. |
-
-**PLINK2** (all extra parameters after `--`)
-
-| Parameter | Description |
-| --- | --- |
-| `--plink2-bin <PATH>` | Path to the plink2 binary (e.g. `/usr/local/bin/plink2`). Required. |
-| `--chromosomes <list>` | Comma-separated chromosomes to merge and analyze (e.g. `1,2,...,22`). Required for `pca` only. |
-| `--threads <N>` | plink2's own `--threads`. |
-
-**Original BOLT-LMM** (all extra parameters after `--`)
-
-| Parameter | Description |
-| --- | --- |
-| `--bolt-bin <PATH>` | Path to the BOLT-LMM binary (e.g. `/opt/BOLT-LMM_v2.5/bolt`). Required. |
-| `--chromosomes <list>` | Comma-separated chromosomes to analyze, matching the dataset (e.g. `19,20,21,22`). Required. |
-| `--threads <N>` | Number of threads BOLT-LMM uses. |
-
-### Application-Specific Parameters
-
-**bolt**
-
-| Parameter | Description |
-| --- | --- |
-| `--bolt-pheno-file <FILE>` | Phenotype file (e.g. `<dataset>/pheno.txt`). **Always pass it; otherwise a synthetic seeded phenotype is used.** See [Phenotype File](#phenotype-file) for format. |
-
-**kernel** (after `--`)
-
-| Parameter | Description |
-| --- | --- |
-| `--direction up\|down` | Matmul direction. Defaults to `up`. |
-| `--k <N>` | Number of probe vectors. k=1 is SpMV, k>1 is SpMM. Defaults to 1. |
-
-**pca_lobpcg** (after `--`)
-
-| Parameter | Description |
-| --- | --- |
-| `--pcs <N>` | Number of eigenvectors to compute. Defaults to 10. |
-
-### Examples
-
-The examples below assume a Docker instance where the simulated 200k dataset is mounted at `/sim2/`, the 1000 Genomes dataset at `/1kg/`, and the output records directory at `/records/`.
-
-**Kernel — Mikado CPU (MKL)** (requires `.grg_spmv` files):
-
-```bash
-cd /opt/mikado/benchmark
-source /opt/intel/oneapi/mkl/latest/env/vars.sh
-python3 evaluate.py -a kernel -b mkl \
-  -d /sim2/chr11.grg_spmv \
-  --mkl-threads 16 --record /records/mkl_ker.jsonl \
-  -- --direction up --k 1
-```
-
-> The `source` command is necessary for MKL executions in Docker.
-
-**GWAS — PLINK2** (requires `.bed`/`.bim`/`.fam` files):
-
-```bash
-cd /opt/mikado/benchmark
-python3 evaluate.py -a gwas -b plink -d /sim2/chr21.bed \
-  --warmup 1 --runs 3 \
-  --work-dir /tmp \
-  --record /records/gwas_plink.jsonl \
-  -- --plink2-bin /usr/local/bin/plink2 --threads 32
-```
-
-**PCA — GRGL** (requires `.grg` files):
-
-```bash
-cd /opt/mikado/benchmark
-python3 evaluate.py -a pca -b grgl \
-  -d /sim2/chr11.grg --warmup 1 --runs 3 \
-  --record /records/grgl_pca.jsonl
-```
-
-**BOLT-LMM — Mikado GPU (cuSparse), 4 devices** (requires `.grg_spmv` files):
-
-```bash
-cd /opt/mikado/benchmark
-python3 evaluate.py -a bolt -b cusparse -d /1kg/ \
-  --runs 1 --capture --native --no-force-spmm \
-  --device-map /opt/mikado/benchmark/configs/device_map_4.json \
-  --bolt-pheno-file /1kg/pheno.txt \
-  --record /records/bolt_cus.jsonl \
-  --output /1kg/bolt_1kg_cus.tsv
-```
-
-> A phenotype file (`/1kg/pheno.txt` here) is required for BOLT-LMM runs.
-
-### Phenotype File
-
-Following the standard format, the `FID IID PHENO` layout is recommended:
-
-```
-FID IID PHENO
-0 HG00096 -685.90926499272052
-0 HG00097 -754.09346295775549
-0 HG00099 -620.97794377676041
-0 HG00100 -465.04867997694726
-0 HG00101 -546.96799947704483
-0 HG00102 -466.26337135287901
-0 HG00103 -623.33471631632881
-0 HG00105 -670.1759539529744
-0 HG00106 -746.82045085437449
-```
-
-For Grapp-based approaches (including Mikado), phenotype rows are matched to individuals **by position, not by ID**: the FID and IID columns are ignored entirely, and only the last column is read. Row i must therefore correspond to GRG individual i.
-
-GRG preserves individual order at construction, and `.grg_spmv` files preserve that order, so alignment holds by default. Manual checking is nonetheless recommended when in doubt. The snippet below prints `FID_IID` in individual order for a `.grg` file:
-
-```python
-import pygrgl
-
-grg = pygrgl.load_immutable_grg(str(PATH_TO_GRG), load_up_edges=False)
-n = int(grg.num_individuals)
-for i in range(n):
-    print(grg.get_individual_id(i))
-```
-
-Input covariates must be ordered accordingly.
+Mikado (GRG-SpMV backend) **only supports the python api-based workflow.** `.grg_spmv` files loaded with GRG-SpMV can be wrapped with the `GRGSpMVCalculator` class in Grapp, and used as regular GRG objects for computation. Please refer to the [README](https://github.com/CornellHPC/GRG-SpMV/blob/main/README.md) for detailed usage and examples.
 
 ## Acknowledgements
 
