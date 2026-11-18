@@ -8,7 +8,7 @@ Mikado is a sparse-linear-algebra powered backend for Genotype Representation Gr
 
 Mikado can achieve speedups of hundreds or even thousands times compared to conventional implementations (PLINK2, BOLT-LMM, etc.), reducing runtime and cost at the same time. Mikado is able to compute **PCA** on the **full All of Us** v8 phased dataset (414,830 Individuals; 870,337,413 Mutations) within **180 seconds**, and **BOLT-LMM-inf** on the 1000 Genomes dataset within **60 seconds**. Compared to the GRGL (GRG Library) implementation, Mikado with A100 GPU can accelerate a single traversal by up to 470x.
 
-For further details on the SpMV-based formulation and performance, please check our preprint, *Sparse Linear Algebra Accelerates Genotype Representation Graph Computation at Biobank Scale* ([link](https://www.biorxiv.org/content/10.64898/2026.09.10.750583v1.full.pdf)). To reproduce the results in the preprint, please refer to the `preprint` branch.
+For further details on the SpMV-based formulation and performance, please check our preprint, *Sparse Linear Algebra Accelerates Genotype Representation Graph Computation at Biobank Scale* ([link](https://www.biorxiv.org/content/10.64898/2026.09.10.750583v3.full.pdf)). To reproduce the results in the preprint, please refer to the `preprint` branch.
 
 ## Table of Contents
 
