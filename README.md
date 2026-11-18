@@ -4,7 +4,7 @@
 
 # Mikado
 
-Mikado is a sparse-linear-algebra powered backend for Genotype Representation Graph (GRG) computation. It is designed to be efficient, scalable, and portable, all at Biobank scale. Currently, x86 CPUs and NVIDIA GPUs are supported.
+Mikado is a sparse-linear-algebra powered backend for Genotype Representation Graph (GRG) computation. It is designed to be efficient, scalable, and portable, all at Biobank scale. It supports x86 CPUs, NVIDIA GPUs and resident single-device AMD GPUs.
 
 Mikado can achieve speedups of hundreds or even thousands times compared to conventional implementations (PLINK2, BOLT-LMM, etc.), reducing runtime and cost at the same time. Mikado is able to compute **PCA** on the **full All of Us** v8 phased dataset (414,830 Individuals; 870,337,413 Mutations) within **180 seconds**, and **BOLT-LMM-inf** on the 1000 Genomes dataset within **60 seconds**. Compared to the GRGL (GRG Library) implementation, Mikado with A100 GPU can accelerate a single traversal by up to 470x.
 
@@ -52,8 +52,7 @@ Our work, Mikado, does not change the graph representation. Instead, we introduc
 - [GRGL](https://github.com/aprilweilab/grgl), which is responsible for GRG consturction and manipulation, and serves as the **Backend** for GRG-based computation.
 - [Grapp](https://github.com/aprilweilab/grapp), which is the **Frontend** and includes the implementations for GRG-based applications, such as GWAS, PCA, and BOLT-LMM-inf. 
 
-The main code repository for **Mikado**, [GRG-SpMV](https://github.com/CornellHPC/grg-spmv), **serves as an alternative computation backend for Grapp.** It currently supports CPU-based computation through Intel MKL, and NVIDIA GPU-based computation through cuSPARSE.
-*[1] Mikado approach can be implemented with minimal effort by using other SpMV vendor backend, e.g ROCm for AMD GPU. If interested in other backends not currently supported, please raise an issue.*
+The main code repository for **Mikado**, [GRG-SpMV](https://github.com/CornellHPC/GRG-SpMV), **serves as an alternative computation backend for Grapp.** It uses Intel MKL on CPUs, cuSPARSE on NVIDIA GPUs and rocSPARSE on AMD GPUs. The sparse formulation and application interfaces are shared.
 
 
 <p align="center">
@@ -81,8 +80,8 @@ The conversion from `.grg` files to `.grg_spmv` files is expected to be lightwei
 
 ### RAM Requirement for Mikado (GRG-SpMV)
 
-RAM consumption is the major constraint of the Mikado approach, especially on GPU where VRAM is limited. While "streaming mode", where chromosomes not currently used reside in CPU memory, can alleviate some memory pressure, it introduce additional overhead and is not recommended in general.
-Alternatively, if multiple GPUs are available on a single node, the workload can be distributed across them to mitigate memory constraints. NVLINK connection between GPUs are highly recommended in this case.
+RAM consumption is the major constraint of the Mikado approach, especially on GPU where VRAM is limited. On CUDA, "streaming mode", where chromosomes not currently used reside in CPU memory, can alleviate some memory pressure, but introduces additional overhead and is not recommended in general.
+Alternatively, if multiple NVIDIA GPUs are available on a single node, the workload can be distributed across them to mitigate memory constraints. NVLINK connection between GPUs are highly recommended in this case.
 
 While RAM usage behavior depends on the specific dataset and application, we conclude that GRGs are the components that consume the most memory (>80%) in the pipeline.
 Extended Section 4 of [our preprint](https://www.biorxiv.org/content/biorxiv/early/2026/09/12/2026.09.10.750583.full.pdf) provides details and examples on memory consumption patterns. Here we show the file size of selected chromosomes in the All of Us v8 phased dataset.
@@ -97,17 +96,19 @@ In our experiments, 4*A100(80 GB) is enough for all experiments performed on the
 
 ## Installation and Usage
 
-Since Mikado is still in early development, we recommend manually cloning the three repositories and installing:
-- [GRGL](https://github.com/aprilweilab/grgl)
-- [Grapp](https://github.com/aprilweilab/grapp)
-- [GRG-SpMV](https://github.com/CornellHPC/grg-spmv)
+Install [GRGL](https://github.com/aprilweilab/grgl), the
+[CornellHPC grapp fork](https://github.com/CornellHPC/grapp/tree/rocm-support)
+and [GRG-SpMV](https://github.com/CornellHPC/GRG-SpMV/tree/rocm-support).
+Use the linked `rocm-support` revisions for this backend update. Follow the
+[core installation instructions](https://github.com/CornellHPC/GRG-SpMV/tree/rocm-support#install)
+for your hardware and the [Python API examples](https://github.com/CornellHPC/GRG-SpMV/tree/rocm-support#basic-usage)
+for conversion and PCA, GWAS or BOLT-LMM-inf. CUDA supports resident, streaming
+and multi-GPU execution; ROCm supports resident execution on one device.
 
-Please refer to the [grg documentation](https://grgl.readthedocs.io/en/stable/) for detailed information on 
-- Constructing GRGs
-- Using Grapp/GRGL to run applications via command line
-- Using Grapp/GRGL to run applications via Python API
+The [v0.2 release](https://github.com/CornellHPC/Mikado/releases/tag/v0.2)
+provides the original preprint reproduction artifacts.
 
-Mikado (GRG-SpMV backend) **only supports the python api-based workflow.** `.grg_spmv` files loaded with GRG-SpMV can be wrapped with the `GRGSpMVCalculator` class in Grapp, and used as regular GRG objects for computation. Please refer to the [README](https://github.com/CornellHPC/GRG-SpMV/blob/main/README.md) for detailed usage and examples.
+For changes to the Mikado integration, follow the shared [contribution guide](https://github.com/CornellHPC/GRG-SpMV/blob/rocm-support/CONTRIBUTING.md).
 
 ## Acknowledgements
 
